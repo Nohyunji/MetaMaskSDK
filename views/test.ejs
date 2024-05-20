@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaMask 연동 예제</title>
+</head>
+<body>
+    <h1>메타마스크 연동 예제</h1>
+    <p>이 웹사이트는 MetaMask를 사용하여 지갑을 연결합니다.</p>
+
+    <!-- MetaMask 설치 유도 -->
+    <button id="installMetamask">Wallet Connect</button>
+
+    <!-- 지갑 정보 표시 -->
+    <div id="walletInfo" style="display: none;">
+        <h2>지갑 정보</h2>
+        <p>주소: <span id="walletAddress"></span></p>
+        <p>네트워크: <span id="network"></span></p>
+        <p>잔액: <span id="balance"></span> ETH</p>
+    </div>
+
+    <script src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script> -->
+    <script type="text/javascript" src="https://unpkg.com/web3@1.2.11/dist/web3.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/web3modal@1.9.0/dist/index.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/evm-chains/lib/index.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/@walletconnect/web3-provider@1.2.1/dist/umd/index.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/fortmatic@2.0.6/dist/fortmatic.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/evm-chains@0.2.0/dist/umd/index.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // MetaMask SDK 초기화
+            const MMSDK = new MetaMaskSDK.MetaMaskSDK({
+                dappMetadata: {
+                    name: "Example Pure JS Dapp",
+                    url: window.location.href,
+                },
+                infuraAPIKey: '0936a771f0ccff861bd3f98bf5f43091',
+                // Other options.
+            });
+
+            // MetaMask 연동 버튼 클릭 시
+            const connectWalletButton = document.getElementById("installMetamask");
+            if (connectWalletButton) {
+                connectWalletButton.addEventListener("click", function () {
+                    // MetaMask 설치 여부 확인
+                    if (typeof window.ethereum === 'undefined') {
+                        alert("MetaMask를 설치해주세요!");
+                    } else {
+                        // MetaMask 초기화 및 권한 요청
+                        const ethereum = MMSDK.getProvider();
+                        if (ethereum) {
+                            ethereum.request({ method: 'eth_requestAccounts' })
+                                .then(() => {
+                                    console.log("권한이 부여되었습니다.");
+                                    // MetaMask와 연동된 후에 지갑 정보 표시
+                                    displayWalletInfo();
+                                })
+                                .catch((error) => {
+                                    console.error("권한 요청이 실패했습니다.", error);
+                                });
+                        }
+                    }
+                });
+            }
+        });
+
+        // MetaMask와 연동된 후에 지갑 정보 표시하는 함수
+        function displayWalletInfo() {
+            const ethereum = window.ethereum;
+            if (ethereum) {
+                ethereum.request({ method: 'eth_accounts' })
+                    .then((accounts) => {
+                        const walletAddress = document.getElementById("walletAddress");
+                        if (walletAddress) {
+                            walletAddress.textContent = accounts[0];
+                        }
+
+                        ethereum.request({ method: 'net_version' })
+                            .then((networkId) => {
+                                const network = document.getElementById("network");
+                                if (network) {
+                                    network.textContent = networkId;
+                                }
+                            })
+                            .catch((error) => {
+                                console.error("네트워크 정보를 가져오는 중 오류 발생:", error);
+                            });
+
+                        ethereum.request({ method: 'eth_getBalance', params: [accounts[0]] })
+                            .then((balance) => {
+                                const formattedBalance = web3.utils.fromWei(balance, 'ether');
+                                const balanceElement = document.getElementById("balance");
+                                if (balanceElement) {
+                                    balanceElement.textContent = formattedBalance;
+                                }
+                            })
+                            .catch((error) => {
+                                console.error("잔액을 가져오는 중 오류 발생:", error);
+                            });
+
+                        // 지갑 정보를 표시하기 위해 해당 요소를 보이도록 설정
+                        const walletInfo = document.getElementById("walletInfo");
+                        if (walletInfo) {
+                            walletInfo.style.display = "block";
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("지갑 주소를 가져오는 중 오류 발생:", error);
+                    });
+            }
+        }
+    </script>
+</body>
+</html>

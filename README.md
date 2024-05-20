@@ -1,1 +1,1 @@
-# MetaMaskSDK
+# bsu_airdrop
